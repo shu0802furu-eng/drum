@@ -1,20 +1,32 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --panel: #f7f6f9;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  /* Neutrals: cool slate, biased toward the indigo accent rather than pure gray. */
+  --bg: #f7f7fb;
+  --panel: #eef0f6;
+  --panel-raised: #ffffff;
+  --border: #dcdfe8;
+  --text: #5b5f72;
+  --text-h: #14151f;
+
+  /* Brand accent: deep indigo-violet. */
+  --accent: #5b4fe0;
+  --accent-bg: rgba(91, 79, 224, 0.1);
+  --accent-border: rgba(91, 79, 224, 0.45);
+
+  /* One color per drum voice, used consistently across the sheet, legend and sliders. */
+  --kick: #2f6fed;
+  --kick-bg: rgba(47, 111, 237, 0.12);
+  --snare: #d84a47;
+  --snare-bg: rgba(216, 74, 71, 0.12);
+  --hihat: #a9781f;
+  --hihat-bg: rgba(169, 120, 31, 0.14);
+
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(20, 21, 31, 0.08) 0 10px 20px -6px, rgba(20, 21, 31, 0.06) 0 4px 8px -3px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --mono: ui-monospace, 'SF Mono', Consolas, monospace;
 
-  font: 16px/145% var(--sans);
+  font: 16px/1.6 var(--sans);
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -26,18 +38,69 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --panel: #1b1c23;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
+    --bg: #14151c;
+    --panel: #1b1c26;
+    --panel-raised: #20212c;
+    --border: #2c2e3b;
+    --text: #9b9fb3;
+    --text-h: #f1f1f6;
+
+    --accent: #948bff;
+    --accent-bg: rgba(148, 139, 255, 0.16);
+    --accent-border: rgba(148, 139, 255, 0.5);
+
+    --kick: #6ea8ff;
+    --kick-bg: rgba(110, 168, 255, 0.16);
+    --snare: #ff8b88;
+    --snare-bg: rgba(255, 139, 136, 0.16);
+    --hihat: #e0b64d;
+    --hihat-bg: rgba(224, 182, 77, 0.18);
+
     --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+      rgba(0, 0, 0, 0.5) 0 10px 20px -6px, rgba(0, 0, 0, 0.3) 0 4px 8px -3px;
   }
+}
+
+/* Explicit overrides so an in-app theme toggle (e.g. when embedded as an Artifact) wins
+   over the OS-level media query in both directions. */
+:root[data-theme='dark'] {
+  --bg: #14151c;
+  --panel: #1b1c26;
+  --panel-raised: #20212c;
+  --border: #2c2e3b;
+  --text: #9b9fb3;
+  --text-h: #f1f1f6;
+  --accent: #948bff;
+  --accent-bg: rgba(148, 139, 255, 0.16);
+  --accent-border: rgba(148, 139, 255, 0.5);
+  --kick: #6ea8ff;
+  --kick-bg: rgba(110, 168, 255, 0.16);
+  --snare: #ff8b88;
+  --snare-bg: rgba(255, 139, 136, 0.16);
+  --hihat: #e0b64d;
+  --hihat-bg: rgba(224, 182, 77, 0.18);
+  --shadow:
+    rgba(0, 0, 0, 0.5) 0 10px 20px -6px, rgba(0, 0, 0, 0.3) 0 4px 8px -3px;
+}
+
+:root[data-theme='light'] {
+  --bg: #f7f7fb;
+  --panel: #eef0f6;
+  --panel-raised: #ffffff;
+  --border: #dcdfe8;
+  --text: #5b5f72;
+  --text-h: #14151f;
+  --accent: #5b4fe0;
+  --accent-bg: rgba(91, 79, 224, 0.1);
+  --accent-border: rgba(91, 79, 224, 0.45);
+  --kick: #2f6fed;
+  --kick-bg: rgba(47, 111, 237, 0.12);
+  --snare: #d84a47;
+  --snare-bg: rgba(216, 74, 71, 0.12);
+  --hihat: #a9781f;
+  --hihat-bg: rgba(169, 120, 31, 0.14);
+  --shadow:
+    rgba(20, 21, 31, 0.08) 0 10px 20px -6px, rgba(20, 21, 31, 0.06) 0 4px 8px -3px;
 }
 
 * {
@@ -56,9 +119,11 @@ body {
 }
 
 h1, h2, h3 {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-h);
   margin: 0 0 8px;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 p {
@@ -67,6 +132,21 @@ p {
 
 button {
   font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
 @media print {

@@ -14,6 +14,13 @@ export const INSTRUMENT_NAMES: Record<Instrument, string> = {
   kick: 'バスドラム',
 };
 
+/** Glyph drawn in a hit cell; shape-coded (not just color-coded) so it still reads in print/grayscale. */
+export const INSTRUMENT_MARKS: Record<Instrument, string> = {
+  hihat: '×',
+  snare: '◆',
+  kick: '●',
+};
+
 /** Detected onset times (seconds) for one instrument band. */
 export type OnsetTrack = Record<Instrument, number[]>;
 

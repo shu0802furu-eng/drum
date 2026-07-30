@@ -220,11 +220,7 @@ function App() {
           />
           {notice && <p className="status">{notice}</p>}
 
-          <section>
-            <h2>ドラム譜</h2>
-            <p className="controls__note">
-              マスをクリックすると手動で修正でき、ダブルクリックすると動画がその位置にシークします。
-            </p>
+          <section className="app__sheet-section">
             <DrumSheet
               grid={grid}
               currentStepIndex={currentStepIndex}
