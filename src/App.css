@@ -338,10 +338,28 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+.measure__rows {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
 .measure__row {
   display: grid;
   gap: 3px;
   height: 34px;
+}
+.measure__playhead {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-border);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 2;
 }
 .cell {
   border: none;
@@ -607,5 +625,8 @@
   }
   .measure {
     border-color: #000;
+  }
+  .measure__playhead {
+    display: none;
   }
 }

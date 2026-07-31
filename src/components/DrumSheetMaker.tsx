@@ -29,8 +29,16 @@ export function DrumSheetMaker() {
 
   const [grid, setGrid] = useState<DrumGrid | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+  const [currentTimeSeconds, setCurrentTimeSeconds] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Read inside the playback-sync effect instead of depending on `grid` directly, so toggling
+  // a cell or re-quantizing mid-playback (which replaces the grid object) doesn't tear down
+  // and rebuild the rAF loop/listeners — that briefly froze the real-time cursor before.
+  const gridRef = useRef<DrumGrid | null>(null);
+  useEffect(() => {
+    gridRef.current = grid;
+  }, [grid]);
 
   function handleFile(file: File) {
     setVideoFile(file);
@@ -134,13 +142,16 @@ export function DrumSheetMaker() {
   // Playback cursor synced to the video element.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !grid) return;
-    const g = grid;
+    if (!video || !gridRef.current) return;
     let rafId = 0;
 
     function updateFromTime() {
-      const idx = Math.floor((video!.currentTime - g.offsetSeconds) / g.stepSeconds);
+      const g = gridRef.current;
+      if (!g) return;
+      const time = video!.currentTime;
+      const idx = Math.floor((time - g.offsetSeconds) / g.stepSeconds);
       setCurrentStepIndex(idx >= 0 && idx < g.steps.length ? idx : -1);
+      setCurrentTimeSeconds(time);
     }
     function tick() {
       updateFromTime();
@@ -149,21 +160,30 @@ export function DrumSheetMaker() {
     function onPlay() {
       rafId = requestAnimationFrame(tick);
     }
-    function onStop() {
+    function onPause() {
       cancelAnimationFrame(rafId);
+      updateFromTime();
+    }
+    function onSeeked() {
+      // Only a one-off refresh here: if the video is still playing (e.g. the user sought
+      // mid-playback via double-click), the running tick loop already owns the updates,
+      // and cancelling it here would freeze the cursor even though playback continues.
       updateFromTime();
     }
 
     video.addEventListener('play', onPlay);
-    video.addEventListener('pause', onStop);
-    video.addEventListener('seeked', onStop);
+    video.addEventListener('pause', onPause);
+    video.addEventListener('seeked', onSeeked);
     return () => {
       cancelAnimationFrame(rafId);
       video.removeEventListener('play', onPlay);
-      video.removeEventListener('pause', onStop);
-      video.removeEventListener('seeked', onStop);
+      video.removeEventListener('pause', onPause);
+      video.removeEventListener('seeked', onSeeked);
     };
-  }, [grid]);
+    // Only (re)attach when a grid first becomes available/unavailable, not on every
+    // grid content change — see the gridRef comment above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Boolean(grid)]);
 
   return (
     <div className="app">
@@ -223,6 +243,7 @@ export function DrumSheetMaker() {
             <DrumSheet
               grid={grid}
               currentStepIndex={currentStepIndex}
+              currentTimeSeconds={currentTimeSeconds}
               onToggleCell={handleToggleCell}
               onSeek={handleSeek}
             />

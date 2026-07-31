@@ -5,13 +5,21 @@ import { INSTRUMENTS, INSTRUMENT_LABELS, INSTRUMENT_MARKS, INSTRUMENT_NAMES } fr
 interface DrumSheetProps {
   grid: DrumGrid;
   currentStepIndex: number;
+  /** Exact video playback time, used to sweep the playhead smoothly between steps. */
+  currentTimeSeconds: number;
   onToggleCell: (stepIndex: number, instrument: Instrument) => void;
   onSeek: (stepIndex: number) => void;
 }
 
 const TARGET_COLUMNS_PER_LINE = 32;
 
-export function DrumSheet({ grid, currentStepIndex, onToggleCell, onSeek }: DrumSheetProps) {
+export function DrumSheet({
+  grid,
+  currentStepIndex,
+  currentTimeSeconds,
+  onToggleCell,
+  onSeek,
+}: DrumSheetProps) {
   const stepsPerMeasure = grid.stepsPerBeat * grid.beatsPerMeasure;
   const measureCount = Math.ceil(grid.steps.length / stepsPerMeasure);
   const measuresPerLine = Math.max(1, Math.floor(TARGET_COLUMNS_PER_LINE / stepsPerMeasure));
@@ -89,48 +97,65 @@ export function DrumSheet({ grid, currentStepIndex, onToggleCell, onSeek }: Drum
                     { length: stepsPerMeasure },
                     (_, i) => start + i,
                   ).filter((i) => i < grid.steps.length);
+                  const isActive = measureIdx === activeMeasure;
+                  const measureStartSeconds = grid.offsetSeconds + start * grid.stepSeconds;
+                  const measureDurationSeconds = stepsPerMeasure * grid.stepSeconds;
+                  const playheadFraction = isActive
+                    ? Math.min(
+                        1,
+                        Math.max(
+                          0,
+                          (currentTimeSeconds - measureStartSeconds) / measureDurationSeconds,
+                        ),
+                      )
+                    : null;
                   return (
-                    <div
-                      className={`measure${measureIdx === activeMeasure ? ' measure--active' : ''}`}
-                      key={measureIdx}
-                    >
+                    <div className={`measure${isActive ? ' measure--active' : ''}`} key={measureIdx}>
                       <div className="measure__number">{measureIdx + 1}</div>
-                      {INSTRUMENTS.map((instrument) => (
-                        <div
-                          className="measure__row"
-                          key={instrument}
-                          style={{ gridTemplateColumns: `repeat(${stepsPerMeasure}, 1fr)` }}
-                        >
-                          {stepIndices.map((stepIdx) => {
-                            const isBeatStart = (stepIdx - start) % grid.stepsPerBeat === 0;
-                            const isHit = grid.steps[stepIdx][instrument];
-                            const isCurrent = stepIdx === currentStepIndex;
-                            return (
-                              <button
-                                type="button"
-                                key={stepIdx}
-                                className={[
-                                  'cell',
-                                  `cell--${instrument}`,
-                                  isBeatStart ? 'cell--beat-start' : '',
-                                  isHit ? 'cell--hit' : '',
-                                  isCurrent ? 'cell--current' : '',
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')}
-                                onClick={() => onToggleCell(stepIdx, instrument)}
-                                onDoubleClick={(e) => {
-                                  e.stopPropagation();
-                                  onSeek(stepIdx);
-                                }}
-                                title={`${stepIdx + 1}拍目 (クリックで入力切替 / ダブルクリックでシーク)`}
-                              >
-                                {isHit ? INSTRUMENT_MARKS[instrument] : ''}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ))}
+                      <div className="measure__rows">
+                        {playheadFraction !== null && (
+                          <div
+                            className="measure__playhead"
+                            style={{ left: `${playheadFraction * 100}%` }}
+                          />
+                        )}
+                        {INSTRUMENTS.map((instrument) => (
+                          <div
+                            className="measure__row"
+                            key={instrument}
+                            style={{ gridTemplateColumns: `repeat(${stepsPerMeasure}, 1fr)` }}
+                          >
+                            {stepIndices.map((stepIdx) => {
+                              const isBeatStart = (stepIdx - start) % grid.stepsPerBeat === 0;
+                              const isHit = grid.steps[stepIdx][instrument];
+                              const isCurrent = stepIdx === currentStepIndex;
+                              return (
+                                <button
+                                  type="button"
+                                  key={stepIdx}
+                                  className={[
+                                    'cell',
+                                    `cell--${instrument}`,
+                                    isBeatStart ? 'cell--beat-start' : '',
+                                    isHit ? 'cell--hit' : '',
+                                    isCurrent ? 'cell--current' : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                  onClick={() => onToggleCell(stepIdx, instrument)}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    onSeek(stepIdx);
+                                  }}
+                                  title={`${stepIdx + 1}拍目 (クリックで入力切替 / ダブルクリックでシーク)`}
+                                >
+                                  {isHit ? INSTRUMENT_MARKS[instrument] : ''}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   );
                 })}
