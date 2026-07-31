@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProgressEntry } from '../lib/progressStore';
 import { addProgressEntry, deleteProgressEntry, getAllProgressEntries } from '../lib/progressStore';
+import { buildShareHtml, downloadHtml } from '../lib/shareExport';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -18,6 +19,11 @@ export function ProgressLog() {
   const [saving, setSaving] = useState(false);
 
   const [compareIds, setCompareIds] = useState<string[]>([]);
+
+  const [shareIds, setShareIds] = useState<string[]>([]);
+  const [authorName, setAuthorName] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,6 +96,7 @@ export function ProgressLog() {
     await deleteProgressEntry(id);
     setEntries((prev) => prev.filter((entry) => entry.id !== id));
     setCompareIds((prev) => prev.filter((x) => x !== id));
+    setShareIds((prev) => prev.filter((x) => x !== id));
   }
 
   function toggleCompare(id: string) {
@@ -98,6 +105,30 @@ export function ProgressLog() {
       if (prev.length >= 2) return [prev[1], id];
       return [...prev, id];
     });
+  }
+
+  function toggleShare(id: string) {
+    setShareIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  async function handleExportShare() {
+    const selected = entries.filter((entry) => shareIds.includes(entry.id));
+    if (selected.length === 0) {
+      setShareError('共有する記録を選んでください。');
+      return;
+    }
+    setExporting(true);
+    setShareError(null);
+    try {
+      const html = await buildShareHtml(selected, authorName);
+      downloadHtml(html, `drum-progress-${todayIso()}.html`);
+    } catch {
+      setShareError('書き出しに失敗しました。動画のサイズが大きすぎる可能性があります。');
+    } finally {
+      setExporting(false);
+    }
   }
 
   const compareEntries = compareIds
@@ -159,6 +190,35 @@ export function ProgressLog() {
         {error && <p className="status status--error">{error}</p>}
       </div>
 
+      <div className="upload-card">
+        <p className="controls__section-title">他の人に共有する</p>
+        <p className="controls__note">
+          一覧の各記録にある「共有に含める」にチェックを付けて選び、単独のHTMLファイルとして書き出します。動画も中に埋め込まれるので、そのファイルを送るだけで相手はアプリなしにブラウザで再生できます。サーバーには保存されません。
+        </p>
+        <div className="upload-card__row">
+          <label className="field">
+            <span>名前（任意）</span>
+            <input
+              type="text"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              placeholder="例: たろう"
+            />
+          </label>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={handleExportShare}
+            disabled={exporting}
+          >
+            {exporting
+              ? '書き出し中…'
+              : `選択した${shareIds.length}件を共有ファイルに書き出す`}
+          </button>
+        </div>
+        {shareError && <p className="status status--error">{shareError}</p>}
+      </div>
+
       {compareEntries.length === 2 && (
         <div className="sheet-card">
           <div className="sheet-card__header">
@@ -208,6 +268,14 @@ export function ProgressLog() {
                     onChange={() => toggleCompare(entry.id)}
                   />
                   見比べる
+                </label>
+                <label className="progress-item__compare">
+                  <input
+                    type="checkbox"
+                    checked={shareIds.includes(entry.id)}
+                    onChange={() => toggleShare(entry.id)}
+                  />
+                  共有に含める
                 </label>
                 <button
                   type="button"
