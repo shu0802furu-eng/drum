@@ -477,6 +477,114 @@
   }
 }
 
+/* Practice calendar */
+.streak-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.streak-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+.streak-stat__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.streak-stat__label {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.calendar-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.calendar-header__right {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.calendar-grid--weekdays {
+  margin-bottom: 6px;
+}
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.calendar-cell {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-h);
+}
+.calendar-cell--empty {
+  background: transparent;
+  border-color: transparent;
+}
+.calendar-cell--today {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  font-weight: 700;
+}
+.calendar-cell--level-1 { background: var(--accent-bg); }
+.calendar-cell--level-2 { background: color-mix(in srgb, var(--accent) 35%, var(--panel-raised)); }
+.calendar-cell--level-3 { background: var(--accent); color: #fff; }
+.calendar-cell__dot {
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text);
+}
+.calendar-legend__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+}
+
 @media print {
   .sheet-card, .controls {
     border-color: #000;
