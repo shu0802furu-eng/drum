@@ -24,14 +24,19 @@ export const INSTRUMENT_MARKS: Record<Instrument, string> = {
 /** Detected onset times (seconds) for one instrument band. */
 export type OnsetTrack = Record<Instrument, number[]>;
 
-/** Per-instrument envelope used for onset detection, shared control-rate. */
+/**
+ * Per-instrument envelope used for onset detection, shared control-rate. Values are
+ * normalized so that a "typical strong hit" in that band sits around 1.0, which is what
+ * lets `Sensitivity` below be a single comparable threshold across all three bands.
+ */
 export interface BandEnvelope {
   instrument: Instrument;
-  /** Envelope samples at `hopSeconds` intervals. */
+  /** Envelope samples at `hopSeconds` intervals, normalized to that band's own dynamics. */
   values: Float32Array;
   hopSeconds: number;
 }
 
+/** Minimum normalized band level (roughly 0-1) required to classify a detected hit as this instrument. */
 export interface Sensitivity {
   hihat: number;
   snare: number;
@@ -39,9 +44,9 @@ export interface Sensitivity {
 }
 
 export const DEFAULT_SENSITIVITY: Sensitivity = {
-  hihat: 1.5,
-  snare: 1.5,
-  kick: 1.5,
+  hihat: 0.35,
+  snare: 0.35,
+  kick: 0.35,
 };
 
 /** One column of the drum tab grid. */

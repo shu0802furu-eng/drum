@@ -124,13 +124,13 @@ export function AnalysisControls({
           {INSTRUMENTS.map((instrument) => (
             <label className={`field field--slider field--${instrument}`} key={instrument}>
               <span>
-                {INSTRUMENT_NAMES[instrument]} 感度: {sensitivity[instrument].toFixed(1)}
+                {INSTRUMENT_NAMES[instrument]} 感度: {sensitivity[instrument].toFixed(2)}
               </span>
               <input
                 type="range"
-                min={0.5}
-                max={3}
-                step={0.1}
+                min={0.05}
+                max={0.9}
+                step={0.05}
                 value={sensitivity[instrument]}
                 onChange={(e) => onSensitivityChange(instrument, Number(e.target.value))}
                 style={{ '--slider-color': `var(${INSTRUMENT_VAR[instrument]})` } as CSSProperties}
