@@ -100,3 +100,34 @@ export function downloadHtml(html: string, filename: string): void {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
+export type ShareResult = 'shared' | 'cancelled' | 'downloaded';
+
+/**
+ * Hands the file to the OS/browser share sheet (LINE, メッセージ, メール, AirDropなど) when the
+ * platform supports it, so sharing is a single tap with no manual file handling. Falls back to a
+ * plain download on browsers without file-sharing support (e.g. desktop Firefox).
+ */
+export async function shareOrDownloadHtml(
+  html: string,
+  filename: string,
+  shareTitle: string,
+): Promise<ShareResult> {
+  const file = new File([html], filename, { type: 'text/html' });
+  const nav = navigator as Navigator & {
+    share?: (data: ShareData) => Promise<void>;
+    canShare?: (data: ShareData) => boolean;
+  };
+
+  if (nav.share && nav.canShare?.({ files: [file] })) {
+    try {
+      await nav.share({ files: [file], title: shareTitle });
+      return 'shared';
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return 'cancelled';
+    }
+  }
+
+  downloadHtml(html, filename);
+  return 'downloaded';
+}

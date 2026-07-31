@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProgressEntry } from '../lib/progressStore';
 import { addProgressEntry, deleteProgressEntry, getAllProgressEntries } from '../lib/progressStore';
-import { buildShareHtml, downloadHtml } from '../lib/shareExport';
+import { buildShareHtml, shareOrDownloadHtml } from '../lib/shareExport';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -24,6 +24,8 @@ export function ProgressLog() {
   const [authorName, setAuthorName] = useState('');
   const [exporting, setExporting] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [quickSharingId, setQuickSharingId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -121,13 +123,34 @@ export function ProgressLog() {
     }
     setExporting(true);
     setShareError(null);
+    setShareNotice(null);
     try {
       const html = await buildShareHtml(selected, authorName);
-      downloadHtml(html, `drum-progress-${todayIso()}.html`);
+      const result = await shareOrDownloadHtml(html, `drum-progress-${todayIso()}.html`, '上達ログ');
+      if (result === 'downloaded') {
+        setShareNotice('ファイルをダウンロードしました。LINEやメールなどに添付して送ってください。');
+      }
     } catch {
       setShareError('書き出しに失敗しました。動画のサイズが大きすぎる可能性があります。');
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleQuickShare(entry: ProgressEntry) {
+    setQuickSharingId(entry.id);
+    setShareError(null);
+    setShareNotice(null);
+    try {
+      const html = await buildShareHtml([entry], '');
+      const result = await shareOrDownloadHtml(html, `drum-progress-${entry.recordedAt}.html`, entry.title);
+      if (result === 'downloaded') {
+        setShareNotice('ファイルをダウンロードしました。LINEやメールなどに添付して送ってください。');
+      }
+    } catch {
+      setShareError('共有に失敗しました。動画のサイズが大きすぎる可能性があります。');
+    } finally {
+      setQuickSharingId(null);
     }
   }
 
@@ -193,7 +216,7 @@ export function ProgressLog() {
       <div className="upload-card">
         <p className="controls__section-title">他の人に共有する</p>
         <p className="controls__note">
-          一覧の各記録にある「共有に含める」にチェックを付けて選び、単独のHTMLファイルとして書き出します。動画も中に埋め込まれるので、そのファイルを送るだけで相手はアプリなしにブラウザで再生できます。サーバーには保存されません。
+          1件だけなら、一覧の各記録にある「共有」ボタンを押すだけでLINEやメールなどにそのまま送れます。複数の記録をまとめて送りたいときは、下で「共有に含める」を選んでからまとめて送信できます。動画は送る相手のファイルに直接埋め込まれるので、サーバーには何もアップロードされません。
         </p>
         <div className="upload-card__row">
           <label className="field">
@@ -212,11 +235,12 @@ export function ProgressLog() {
             disabled={exporting}
           >
             {exporting
-              ? '書き出し中…'
-              : `選択した${shareIds.length}件を共有ファイルに書き出す`}
+              ? '送信中…'
+              : `選択した${shareIds.length}件をまとめて送る`}
           </button>
         </div>
         {shareError && <p className="status status--error">{shareError}</p>}
+        {shareNotice && <p className="status">{shareNotice}</p>}
       </div>
 
       {compareEntries.length === 2 && (
@@ -269,6 +293,14 @@ export function ProgressLog() {
                   />
                   見比べる
                 </label>
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => handleQuickShare(entry)}
+                  disabled={quickSharingId === entry.id}
+                >
+                  {quickSharingId === entry.id ? '共有中…' : '共有'}
+                </button>
                 <label className="progress-item__compare">
                   <input
                     type="checkbox"
